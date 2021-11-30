@@ -5,9 +5,22 @@ import argparse
 #Write you own function that moves the dron from one place to another 
 #the function returns the drone's current location while moving
 #====================================================================================================
-def your_function():
+
+def droneRoute(start_coords, end_coords):
+    return pow(pow(startCoords[0] - endCoords[0], 2) + pow(startCoords[1] - endCoords[1], 2), .5)
+
+def your_function(current_coords, dest_Coords, step_size):
     longitude = 13.21008
     latitude = 55.71106
+
+    if droneRoute(current_coords, dest_Coords) < 0.00000001:
+        longitude = current_coords[0]
+        latitude = current_coords[1]
+
+    else:
+        longitude += current_coords[0]/step_size
+        latitude += current_coords[1]/step_size
+
     return (longitude, latitude)
 #====================================================================================================
 
@@ -18,8 +31,18 @@ def run(current_coords, from_coords, to_coords, SERVER_URL):
     # 2. Plan a path with your own function, so that the drone moves from [current_address] to [from_address], and the from [from_address] to [to_address]. 
     # 3. While moving, the drone keeps sending it's location to the database.
     #====================================================================================================
-    while True:
-        drone_coords = your_function()
+
+    drone_coords = current_coords
+    while drone_coords != from_coords:
+        drone_coords = your_function(drone_coords, from_coords)
+        with requests.Session() as session:
+            drone_location = {'longitude': drone_coords[0],
+                              'latitude': drone_coords[1]
+                        }
+            resp = session.post(SERVER_URL, json=drone_location)
+
+    while drone_coords != to_coords:
+        drone_coords = your_function(drone_coords, to_coords)
         with requests.Session() as session:
             drone_location = {'longitude': drone_coords[0],
                               'latitude': drone_coords[1]
